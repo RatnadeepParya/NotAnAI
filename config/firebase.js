@@ -69,6 +69,12 @@ function initAdminSDK() {
  */
 function initClientSDK() {
   try {
+    if (!config.firebase.apiKey || !config.firebase.projectId) {
+      isOfflineMode = true;
+      console.log(' [Firebase] Running in Local-First Offline Mode (Zero cloud credentials configured).');
+      return false;
+    }
+
     const { initializeApp } = require('firebase/app');
     const { getFirestore, setLogLevel } = require('firebase/firestore');
     const { getDatabase } = require('firebase/database');
@@ -80,11 +86,17 @@ function initClientSDK() {
 
     clientApp = initializeApp(config.firebase, 'app-client');
     clientDb = getFirestore(clientApp);
-    clientRtdb = getDatabase(clientApp);
+    if (config.firebase.databaseURL) {
+      try {
+        clientRtdb = getDatabase(clientApp);
+        if (!adminRtdb) isRtdbAvailable = true;
+      } catch (rtdbErr) {
+        console.warn(' [Firebase] RTDB client initialization note:', rtdbErr.message);
+      }
+    }
     clientAuth = getAuth(clientApp);
 
     if (!adminDb) isFirestoreAvailable = true;
-    if (!adminRtdb) isRtdbAvailable = true;
     console.log(' [Firebase] Client SDK initialized successfully.');
     return true;
   } catch (err) {

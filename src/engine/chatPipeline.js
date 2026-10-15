@@ -105,12 +105,14 @@ class ChatPipeline {
       const isLocalSatisfied = topLocal && topLocal.confidence >= 0.70 &&
         ((topLocal.explanation?.matchedKeywords?.length > 0) || topLocal.explanation?.exactMatch || topLocal.explanation?.phraseMatch);
 
-      if (intentResult.intent !== INTENTS.GREETING) {
+      const allowWeb = options.allowWeb !== false && !options.offlineOnly;
+      if (allowWeb && intentResult.intent !== INTENTS.GREETING) {
         if (!isLocalSatisfied || !topLocal) {
           const webStart = Date.now();
           const webResult = await webRetrievalEngine.retrieveAndLearn(queryToSearch, {
             language: detectedLanguage.language,
-            context
+            context,
+            allowWeb
           });
           trace.timings.webRetrievalMs = Date.now() - webStart;
 

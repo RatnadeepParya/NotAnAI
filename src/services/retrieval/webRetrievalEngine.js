@@ -8,6 +8,7 @@ const KeywordExtractor = require('../../engine/nlp/keywordExtractor');
 const Tokenizer = require('../../engine/nlp/tokenizer');
 const { localStorageEngine } = require('../storage/localStorageEngine');
 const { firestoreService } = require('../firebase/firestoreService');
+const PorterStemmer = require('../../engine/nlp/stemmer');
 
 /**
  * WebRetrievalEngine
@@ -62,6 +63,76 @@ class WebRetrievalEngine {
   }
 
   /**
+   * Validate that a web result candidate is strictly relevant and answers the query
+   * Prevents false positive hallucination from encyclopedic list or disambiguation articles.
+   */
+  _isResultRelevant(query, title, extract) {
+    if (!title || !extract || extract.length < 30) return false;
+
+    // Disallowed meta, list, and disambiguation pages
+    const lowerTitle = title.toLowerCase();
+    if (
+      lowerTitle.startsWith('list of') ||
+      lowerTitle.startsWith('index of') ||
+      lowerTitle.startsWith('glossary of') ||
+      lowerTitle.startsWith('outline of') ||
+      lowerTitle.startsWith('timeline of') ||
+      lowerTitle.startsWith('category:') ||
+      lowerTitle.includes('disambiguation')
+    ) {
+      return false;
+    }
+
+    const stopWords = new Set([
+      'the', 'a', 'an', 'is', 'are', 'was', 'were', 'and', 'or', 'of', 'in', 'on', 'at', 'to',
+      'for', 'with', 'by', 'from', 'about', 'tell', 'explain', 'describe', 'define', 'what',
+      'who', 'where', 'when', 'why', 'how', 'which', 'whom', 'whose', 'does', 'did', 'done',
+      'can', 'could', 'would', 'should', 'will', 'have', 'has', 'had', 'many', 'much', 'some',
+      'any', 'that', 'this', 'these', 'those', 'there', 'here', 'please', 'know', 'using',
+      'made', 'build', 'give', 'secret', 'recipe'
+    ]);
+
+    const rawQueryTokens = Tokenizer.tokenize(query.replace(/[-_/]/g, ' '))
+      .map(t => t.toLowerCase())
+      .filter(t => t.length > 2 && !stopWords.has(t));
+
+    if (rawQueryTokens.length === 0) return true;
+
+    // Porter Stemming for robust morphological matching
+    const queryStems = rawQueryTokens.map(t => PorterStemmer.stem(t));
+    const cleanTitle = title.replace(/[-_/]/g, ' ');
+    const cleanExtract = extract.replace(/[-_/]/g, ' ');
+    const lowerExtract = cleanExtract.toLowerCase();
+    const lowerTitleClean = cleanTitle.toLowerCase();
+
+    const titleStems = new Set(Tokenizer.tokenize(cleanTitle).map(t => PorterStemmer.stem(t.toLowerCase())));
+    const extractStems = new Set(Tokenizer.tokenize(cleanExtract).map(t => PorterStemmer.stem(t.toLowerCase())));
+    const combinedStems = new Set([...titleStems, ...extractStems]);
+
+    let matchedInCombined = 0;
+    let matchedInTitle = 0;
+
+    for (const qs of queryStems) {
+      if (combinedStems.has(qs) || lowerExtract.includes(qs) || lowerTitleClean.includes(qs)) {
+        matchedInCombined++;
+      }
+      if (titleStems.has(qs) || lowerTitleClean.includes(qs)) {
+        matchedInTitle++;
+      }
+    }
+
+    const combinedCoverage = matchedInCombined / queryStems.length;
+
+    if (queryStems.length <= 2) {
+      return combinedCoverage >= 1.0 && matchedInTitle >= 1;
+    }
+
+    // For queries with 3+ content keywords, require at least 60% coverage AND at least 1 keyword in title
+    // or >= 80% coverage across combined text
+    return (combinedCoverage >= 0.60 && matchedInTitle >= 1) || combinedCoverage >= 0.80;
+  }
+
+  /**
    * Extract the highest-scoring passage sentence answering the query (Deterministic RAG)
    */
   _extractDirectAnswer(query, fullText) {
@@ -105,13 +176,15 @@ class WebRetrievalEngine {
       const directData = await this._fetchWithTimeout(directSummaryUrl, {}, this.timeoutMs);
 
       if (directData && directData.type === 'standard' && directData.extract && directData.extract.length > 50) {
-        return {
-          title: directData.title,
-          answer: directData.extract,
-          description: directData.description || 'Encyclopedic entry',
-          sourceUrl: directData.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(directData.title)}`,
-          sourceName: 'Wikipedia'
-        };
+        if (this._isResultRelevant(cleanTerm, directData.title, directData.extract)) {
+          return {
+            title: directData.title,
+            answer: directData.extract,
+            description: directData.description || 'Encyclopedic entry',
+            sourceUrl: directData.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(directData.title)}`,
+            sourceName: 'Wikipedia'
+          };
+        }
       }
 
       // 2. Wikipedia Search API with multi-candidate inspection (srlimit=5)
@@ -120,17 +193,30 @@ class WebRetrievalEngine {
 
       if (searchData?.query?.search && searchData.query.search.length > 0) {
         for (const hit of searchData.query.search) {
+          const lowerHitTitle = (hit.title || '').toLowerCase();
+          if (
+            lowerHitTitle.startsWith('list of') ||
+            lowerHitTitle.startsWith('index of') ||
+            lowerHitTitle.startsWith('glossary of') ||
+            lowerHitTitle.startsWith('category:') ||
+            lowerHitTitle.includes('disambiguation')
+          ) {
+            continue;
+          }
+
           const summaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(hit.title)}`;
           const summaryData = await this._fetchWithTimeout(summaryUrl, {}, this.timeoutMs);
 
           if (summaryData && summaryData.type === 'standard' && summaryData.extract && summaryData.extract.length > 50) {
-            return {
-              title: summaryData.title,
-              answer: summaryData.extract,
-              description: summaryData.description || hit.snippet?.replace(/<[^>]+>/g, '') || 'Encyclopedic entry',
-              sourceUrl: summaryData.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(summaryData.title)}`,
-              sourceName: 'Wikipedia'
-            };
+            if (this._isResultRelevant(cleanTerm, summaryData.title, summaryData.extract)) {
+              return {
+                title: summaryData.title,
+                answer: summaryData.extract,
+                description: summaryData.description || hit.snippet?.replace(/<[^>]+>/g, '') || 'Encyclopedic entry',
+                sourceUrl: summaryData.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(summaryData.title)}`,
+                sourceName: 'Wikipedia'
+              };
+            }
           }
         }
       }
@@ -143,13 +229,15 @@ class WebRetrievalEngine {
         const entityData = await this._fetchWithTimeout(entitySummaryUrl, {}, this.timeoutMs);
 
         if (entityData && entityData.type === 'standard' && entityData.extract && entityData.extract.length > 50) {
-          return {
-            title: entityData.title,
-            answer: entityData.extract,
-            description: entityData.description || 'Encyclopedic entry',
-            sourceUrl: entityData.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(entityData.title)}`,
-            sourceName: 'Wikipedia'
-          };
+          if (this._isResultRelevant(cleanTerm, entityData.title, entityData.extract)) {
+            return {
+              title: entityData.title,
+              answer: entityData.extract,
+              description: entityData.description || 'Encyclopedic entry',
+              sourceUrl: entityData.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(entityData.title)}`,
+              sourceName: 'Wikipedia'
+            };
+          }
         }
       }
     } catch (_) {}
@@ -168,18 +256,24 @@ class WebRetrievalEngine {
       const data = await this._fetchWithTimeout(ddgUrl, {}, this.timeoutMs);
 
       if (data && data.AbstractText && data.AbstractText.length > 40) {
-        return {
-          title: data.Heading || cleanTerm,
-          answer: data.AbstractText,
-          description: data.AbstractSource || 'Instant Answer',
-          sourceUrl: data.AbstractURL || 'https://duckduckgo.com',
-          sourceName: data.AbstractSource || 'DuckDuckGo Instant Answer'
-        };
+        if (this._isResultRelevant(cleanTerm, data.Heading || cleanTerm, data.AbstractText)) {
+          return {
+            title: data.Heading || cleanTerm,
+            answer: data.AbstractText,
+            description: data.AbstractSource || 'Instant Answer',
+            sourceUrl: data.AbstractURL || 'https://duckduckgo.com',
+            sourceName: data.AbstractSource || 'DuckDuckGo Instant Answer'
+          };
+        }
       }
 
       // Check RelatedTopics when AbstractText is empty
       if (data && Array.isArray(data.RelatedTopics) && data.RelatedTopics.length > 0) {
-        const topic = data.RelatedTopics.find(t => t.Text && t.Text.length > 40);
+        const topic = data.RelatedTopics.find(t => {
+          if (!t.Text || t.Text.length <= 40) return false;
+          const candidateTitle = t.FirstURL ? t.FirstURL.split('/').pop().replace(/_/g, ' ') : cleanTerm;
+          return this._isResultRelevant(cleanTerm, candidateTitle, t.Text);
+        });
         if (topic) {
           const title = topic.FirstURL ? topic.FirstURL.split('/').pop().replace(/_/g, ' ') : cleanTerm;
           return {
@@ -212,15 +306,16 @@ class WebRetrievalEngine {
         const cseData = await this._fetchWithTimeout(cseUrl, {}, this.timeoutMs);
 
         if (cseData && Array.isArray(cseData.items) && cseData.items.length > 0) {
-          const topItem = cseData.items[0];
-          if (topItem.snippet && topItem.snippet.length > 30) {
-            return {
-              title: topItem.title || cleanTerm,
-              answer: topItem.snippet.replace(/\n+/g, ' ').trim(),
-              description: 'Google Programmable Search',
-              sourceUrl: topItem.link || 'https://www.google.com',
-              sourceName: 'Google Search'
-            };
+          for (const topItem of cseData.items) {
+            if (topItem.snippet && topItem.snippet.length > 30 && this._isResultRelevant(cleanTerm, topItem.title || cleanTerm, topItem.snippet)) {
+              return {
+                title: topItem.title || cleanTerm,
+                answer: topItem.snippet.replace(/\n+/g, ' ').trim(),
+                description: 'Google Programmable Search',
+                sourceUrl: topItem.link || 'https://www.google.com',
+                sourceName: 'Google Search'
+              };
+            }
           }
         }
       }
@@ -243,9 +338,9 @@ class WebRetrievalEngine {
           const html = await response.text();
           const snippetMatches = html.match(/<a class="result__snippet[^>]*>([\s\S]*?)<\/a>/gi) || [];
 
-          if (snippetMatches.length > 0) {
-            const rawSnippet = snippetMatches[0].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-            if (rawSnippet.length > 40) {
+          for (const match of snippetMatches) {
+            const rawSnippet = match.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+            if (rawSnippet.length > 40 && this._isResultRelevant(cleanTerm, cleanTerm, rawSnippet)) {
               return {
                 title: cleanTerm,
                 answer: rawSnippet,
@@ -270,6 +365,8 @@ class WebRetrievalEngine {
    * @returns {Promise<Object|null>}
    */
   async retrieveAndLearn(rawQuery, options = {}) {
+    if (options.allowWeb === false || options.offlineOnly) return null;
+
     const cleanQuery = rawQuery.trim();
     if (cleanQuery.length < 3) return null;
 
@@ -296,11 +393,19 @@ class WebRetrievalEngine {
       return null;
     }
 
-    // 3. Extract the direct answering sentence (Deterministic RAG)
+    // Ensure retrieved result is relevant to the query
+    if (!this._isResultRelevant(cleanQuery, webResult.title, webResult.answer)) {
+      return null;
+    }
+
+    // 4. Extract the direct answering sentence (Deterministic RAG)
     const directAnswer = this._extractDirectAnswer(cleanQuery, webResult.answer);
 
-    // 4. Ingest and self-train into durable storage, index, graph, and vocabulary
+    // 5. Ingest and self-train into durable storage, index, graph, and vocabulary
     const learnedDoc = this._createAndIngestKnowledgeRecord(webResult, cleanQuery, options, directAnswer);
+    if (!learnedDoc) {
+      return null;
+    }
 
     // 5. Format candidate search result compatible with HybridSearch
     const candidateResult = {

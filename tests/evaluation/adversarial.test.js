@@ -44,7 +44,7 @@ describe('Adversarial & Knowledge Boundary Tests', () => {
     assert.equal(candidate.status, CANDIDATE_STATUSES.PENDING);
 
     // 2. Query chatbot: must NOT return the unapproved candidate!
-    const resBefore = await chatPipeline.process(maliciousQuery);
+    const resBefore = await chatPipeline.process(maliciousQuery, { allowWeb: false });
     assert.notEqual(resBefore.text, fakeClaim);
     assert.equal(resBefore.format, 'unknown_knowledge');
 
