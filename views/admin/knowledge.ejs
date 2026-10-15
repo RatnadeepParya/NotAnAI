@@ -1,0 +1,119 @@
+<%- include('../partials/layout-start') %>
+
+<div class="admin-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Knowledge Repository</h1>
+      <p class="page-subtitle">Inspect, curate, and author verified knowledge records</p>
+    </div>
+    <div class="header-actions">
+      <button id="btn-add-knowledge" class="btn btn-primary">+ Add Knowledge Record</button>
+    </div>
+  </div>
+
+  <div class="filter-bar card mb-4">
+    <form method="GET" action="/admin/knowledge" class="filter-form">
+      <input type="text" name="q" value="<%= query %>" placeholder="Search knowledge records..." class="input-search">
+      <select name="domain" class="select-dropdown">
+        <option value="">All Domains</option>
+        <% const domains = ['science', 'mathematics', 'physics', 'chemistry', 'biology', 'astronomy', 'geography', 'history', 'literature', 'philosophy', 'computer-science', 'programming', 'database-administration', 'networking', 'cybersecurity', 'engineering', 'economics', 'finance', 'business', 'agriculture', 'environment', 'art', 'music', 'languages', 'general-knowledge']; %>
+        <% domains.forEach(d => { %>
+          <option value="<%= d %>" <%= currentDomain === d ? 'selected' : '' %>><%= d %></option>
+        <% }) %>
+      </select>
+      <button type="submit" class="btn btn-secondary">Filter</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>Records (<%= totalCount %>)</h3>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Domain</th>
+              <th>Topic</th>
+              <th>Confidence</th>
+              <th>Version</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (records && records.length > 0) { %>
+              <% records.forEach(rec => { %>
+                <tr data-record-id="<%= rec.id %>">
+                  <td class="font-medium"><%= rec.title %></td>
+                  <td><span class="domain-tag"><%= rec.domain %></span></td>
+                  <td><%= rec.topic %></td>
+                  <td><%= Math.round((rec.confidence || 0.95) * 100) %>%</td>
+                  <td>v<%= rec.version || 1 %></td>
+                  <td>
+                    <button class="btn-table btn-delete-knowledge" data-id="<%= rec.id %>">Delete</button>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="6" class="text-center p-4">No records found matching query.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for adding/editing record -->
+<div id="knowledge-modal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3>Add Verified Knowledge Record</h3>
+      <button class="modal-close-btn">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="knowledge-form">
+        <div class="form-group mb-3">
+          <label class="form-label">Title / Primary Question *</label>
+          <input type="text" id="k-title" class="form-control" required placeholder="e.g. What is quantum entanglement?">
+        </div>
+        <div class="form-row mb-3">
+          <div class="form-group col">
+            <label class="form-label">Domain *</label>
+            <select id="k-domain" class="form-control" required>
+              <% domains.forEach(d => { %>
+                <option value="<%= d %>"><%= d %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group col">
+            <label class="form-label">Topic *</label>
+            <input type="text" id="k-topic" class="form-control" required placeholder="e.g. quantum-mechanics">
+          </div>
+        </div>
+        <div class="form-group mb-3">
+          <label class="form-label">Question Patterns (one per line) *</label>
+          <textarea id="k-patterns" class="form-control" rows="3" required placeholder="What is quantum entanglement?&#10;Explain quantum entanglement"></textarea>
+        </div>
+        <div class="form-group mb-3">
+          <label class="form-label">Verified Answer *</label>
+          <textarea id="k-answer" class="form-control" rows="4" required placeholder="Detailed factual explanation..."></textarea>
+        </div>
+        <div class="form-group mb-3">
+          <label class="form-label">Keywords (comma-separated)</label>
+          <input type="text" id="k-keywords" class="form-control" placeholder="physics, quantum, particles">
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">Save to Knowledge Base</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/layout-end', { script: '/js/admin.js' }) %>

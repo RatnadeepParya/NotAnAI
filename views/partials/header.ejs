@@ -1,0 +1,35 @@
+<header class="app-header">
+  <div class="header-left">
+    <button id="toggle-sidebar-btn" class="icon-btn" title="Toggle Sidebar" aria-label="Toggle Sidebar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+    </button>
+    <div class="header-title">
+      <span class="logo-badge">Local-First</span>
+      <span class="app-name">Not an AI</span>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <div id="sync-status-indicator" class="status-indicator online" title="Status: Online & Ready">
+      <span class="status-dot"></span>
+      <span class="status-text">Ready</span>
+    </div>
+
+    <button id="theme-toggle-btn" class="icon-btn" title="Toggle Light/Dark Theme">
+      <svg id="theme-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+
+    <% if (currentUser && !currentUser.isGuest) { %>
+      <div class="user-menu">
+        <span class="user-name"><%= currentUser.username %></span>
+        <span class="user-role-badge"><%= currentUser.role %></span>
+        <a href="/auth/logout" class="btn btn-secondary btn-sm">Sign Out</a>
+      </div>
+    <% } else { %>
+      <div class="guest-menu">
+        <span class="guest-label">Guest Mode</span>
+        <a href="/auth/login" class="btn btn-primary btn-sm">Sign In</a>
+      </div>
+    <% } %>
+  </div>
+</header>

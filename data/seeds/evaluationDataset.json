@@ -1,0 +1,72 @@
+[
+  {
+    "query": "What is a database?",
+    "expectedRecordId": "k_cs_db_001",
+    "expectedIntent": "definition"
+  },
+  {
+    "query": "What is JavaScript?",
+    "expectedRecordId": "k_prog_js_001",
+    "expectedIntent": "definition"
+  },
+  {
+    "query": "What is Earth?",
+    "expectedRecordId": "k_astro_earth_001",
+    "expectedIntent": "definition"
+  },
+  {
+    "query": "What is the speed of light?",
+    "expectedRecordId": "k_phys_light_001",
+    "expectedIntent": "question_answering"
+  },
+  {
+    "query": "What is the chemical formula of water?",
+    "expectedRecordId": "k_chem_water_001",
+    "expectedIntent": "question_answering"
+  },
+  {
+    "query": "What is DNA?",
+    "expectedRecordId": "k_bio_dna_001",
+    "expectedIntent": "definition"
+  },
+  {
+    "query": "What is the highest mountain on Earth?",
+    "expectedRecordId": "k_geo_everest_001",
+    "expectedIntent": "question_answering"
+  },
+  {
+    "query": "When did World War II end?",
+    "expectedRecordId": "k_hist_ww2_001",
+    "expectedIntent": "question_answering"
+  },
+  {
+    "query": "Who painted the Mona Lisa?",
+    "expectedRecordId": "k_art_monalisa_001",
+    "expectedIntent": "question_answering"
+  },
+  {
+    "query": "What is the Pythagorean theorem?",
+    "expectedRecordId": "k_math_pythagoras_001",
+    "expectedIntent": "question_answering"
+  },
+  {
+    "query": "calculate 25 * 4 + 15",
+    "expectedIntent": "calculation"
+  },
+  {
+    "query": "convert 10 km to miles",
+    "expectedIntent": "calculation"
+  },
+  {
+    "query": "Hello there!",
+    "expectedIntent": "greeting"
+  },
+  {
+    "query": "What is the secret recipe for Martian space cookies made by ancient Atlantis?",
+    "shouldReject": true
+  },
+  {
+    "query": "Who won the galactic championship of year 3482?",
+    "shouldReject": true
+  }
+]

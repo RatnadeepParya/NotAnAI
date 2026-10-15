@@ -1,0 +1,50 @@
+{
+  "name": "not-an-ai",
+  "version": "1.0.0",
+  "description": "Enterprise-grade, local-first chatbot application built without LLMs or external AI APIs",
+  "main": "app.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js",
+    "test": "node --test --test-force-exit tests/**/*.test.js",
+    "test:nlp": "node --test tests/unit/nlp.test.js",
+    "test:reasoning": "node --test tests/unit/reasoning.test.js",
+    "test:retrieval": "node --test tests/unit/retrieval.test.js",
+    "test:security": "node --test tests/security/security.test.js",
+    "test:adversarial": "node --test tests/evaluation/adversarial.test.js",
+    "test:guardrails": "node --test tests/security/guardrails.test.js",
+    "test:integration": "node --test --test-force-exit tests/integration/api.test.js",
+    "test:eval": "node scripts/evaluate.js",
+    "train": "node scripts/train.js",
+    "seed:massive": "node scripts/generateMassiveKnowledge.js",
+    "bootstrap": "node scripts/bootstrap.js",
+    "check:syntax": "node scripts/checkSyntax.js",
+    "evaluate": "node scripts/evaluate.js"
+  },
+  "keywords": [
+    "chatbot",
+    "nlp",
+    "local-first",
+    "knowledge-graph",
+    "deterministic-reasoning",
+    "bm25",
+    "firestore",
+    "realtime-database",
+    "offline-first"
+  ],
+  "author": "Ratnadeep Parya",
+  "license": "MIT",
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "csv-parse": "^5.5.6",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.4.0",
+    "express-session": "^1.18.0",
+    "firebase": "^10.13.2",
+    "firebase-admin": "^12.5.0",
+    "helmet": "^8.0.0"
+  }
+}

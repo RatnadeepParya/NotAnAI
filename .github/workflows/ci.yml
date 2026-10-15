@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-and-test:
+    name: Node.js ${{ matrix.node-version }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        node-version: [ 20.x, 22.x ]
+
+    env:
+      NODE_ENV: test
+      CI: true
+      PORT: 3000
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Step 1 - Validate JavaScript Syntax & Static Code Integrity
+        run: npm run check:syntax
+
+      - name: Step 2 - Bootstrap Local Knowledge Base & BM25 Indexes
+        run: npm run bootstrap
+
+      - name: Step 3 - Run All Unit, Security & Integration Test Suites
+        run: npm test
+
+      - name: Step 4 - Run Golden Evaluation Benchmark Suite
+        run: npm run evaluate

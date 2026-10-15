@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title || 'Not an AI — Local-First Intelligent Chatbot' %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+</head>
+<body class="app-body">
+  <div class="app-container">
+    <%- include('../partials/sidebar') %>
+    <main class="main-content">
+      <%- include('../partials/header') %>
+      <div class="content-wrapper">
+        <%- body %>
+      </div>
+    </main>
+  </div>
+  <script src="/js/chat.js"></script>
+</body>
+</html>

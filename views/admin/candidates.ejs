@@ -1,0 +1,56 @@
+<%- include('../partials/layout-start') %>
+
+<div class="admin-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Learning Approval Queue</h1>
+      <p class="page-subtitle">Review, approve, or reject user contributions and self-learning candidates</p>
+    </div>
+    <div class="header-actions">
+      <div class="status-filters">
+        <a href="/admin/candidates?status=pending" class="filter-tab <%= currentStatus === 'pending' ? 'active' : '' %>">Pending</a>
+        <a href="/admin/candidates?status=approved" class="filter-tab <%= currentStatus === 'approved' ? 'active' : '' %>">Approved</a>
+        <a href="/admin/candidates?status=rejected" class="filter-tab <%= currentStatus === 'rejected' ? 'active' : '' %>">Rejected</a>
+        <a href="/admin/candidates?status=published" class="filter-tab <%= currentStatus === 'published' ? 'active' : '' %>">Published</a>
+        <a href="/admin/candidates?status=all" class="filter-tab <%= currentStatus === 'all' ? 'active' : '' %>">All</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body p-0">
+      <% if (candidates && candidates.length > 0) { %>
+        <div class="candidate-list">
+          <% candidates.forEach(cand => { %>
+            <div class="candidate-card" data-candidate-id="<%= cand.id %>">
+              <div class="candidate-header">
+                <span class="candidate-title font-medium"><%= cand.title %></span>
+                <span class="badge badge-<%= cand.status %>"><%= cand.status %></span>
+              </div>
+              <div class="candidate-meta text-muted mb-2">
+                Submitted by: <code><%= cand.submittedBy %></code> | Domain: <code><%= cand.domain %></code> | <%= new Date(cand.createdAt).toLocaleString() %>
+              </div>
+              <div class="candidate-body">
+                <strong>Proposed Answer:</strong>
+                <p class="candidate-answer-text"><%= cand.answer %></p>
+              </div>
+
+              <% if (cand.status === 'pending') { %>
+                <div class="candidate-actions mt-3">
+                  <button class="btn btn-sm btn-primary btn-review" data-id="<%= cand.id %>" data-decision="approved">Approve & Publish</button>
+                  <button class="btn btn-sm btn-danger btn-review" data-id="<%= cand.id %>" data-decision="rejected">Reject</button>
+                </div>
+              <% } %>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div class="text-center p-5 text-muted">
+          No candidates currently in the <strong><%= currentStatus %></strong> queue.
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/layout-end', { script: '/js/admin.js' }) %>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'Not an AI — Local-First Intelligent Chatbot' %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+</head>
+<body class="app-body">
+  <div class="app-container">
+    <%- include('sidebar') %>
+    <main class="main-content">
+      <%- include('header') %>
+      <div class="content-wrapper">

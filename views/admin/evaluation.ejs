@@ -1,0 +1,72 @@
+<%- include('../partials/layout-start') %>
+
+<div class="admin-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Evaluation Benchmark Suite</h1>
+      <p class="page-subtitle">Golden test set evaluation of Precision, Recall, MRR, Intent Accuracy, and Latency</p>
+    </div>
+    <div class="header-actions">
+      <button id="btn-run-eval-suite" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span>Run Benchmark Suite (<%= datasetCount %> Tests)</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="eval-loading" class="card p-5 text-center hidden">
+    <div class="spinner mb-3" style="width: 32px; height: 32px; margin: 0 auto;"></div>
+    <h3>Running Benchmark Evaluation...</h3>
+    <p class="text-muted">Evaluating retrieval accuracy, MRR, intent classification, and rejection thresholds across all domains.</p>
+  </div>
+
+  <div id="eval-results-container" class="hidden">
+    <div class="stats-grid mb-4">
+      <div class="stat-card">
+        <div class="stat-icon">🎯</div>
+        <div class="stat-content">
+          <div class="stat-value" id="res-top1">0%</div>
+          <div class="stat-label">Top-1 Accuracy</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📈</div>
+        <div class="stat-content">
+          <div class="stat-value" id="res-mrr">0.000</div>
+          <div class="stat-label">Mean Reciprocal Rank (MRR)</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🧠</div>
+        <div class="stat-content">
+          <div class="stat-value" id="res-intent">0%</div>
+          <div class="stat-label">Intent Classification Accuracy</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-content">
+          <div class="stat-value" id="res-latency">0ms</div>
+          <div class="stat-label">Average Retrieval Latency</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Detailed Metrics Summary</h3>
+      </div>
+      <div class="card-body">
+        <pre id="eval-raw-json" class="json-dump"></pre>
+      </div>
+    </div>
+  </div>
+
+  <div id="eval-placeholder" class="card p-5 text-center">
+    <div class="empty-icon" style="font-size: 48px; margin-bottom: 12px;">📊</div>
+    <h3>No Active Benchmark Run</h3>
+    <p class="text-muted">Click "Run Benchmark Suite" above to test the entire retrieval pipeline against the verified golden test suite.</p>
+  </div>
+</div>
+
+<%- include('../partials/layout-end', { script: '/js/admin.js' }) %>

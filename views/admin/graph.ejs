@@ -1,0 +1,115 @@
+<%- include('../partials/layout-start') %>
+
+<div class="admin-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Knowledge Graph Explorer</h1>
+      <p class="page-subtitle">Entities, semantic relationships, and multi-hop deductive paths</p>
+    </div>
+    <div class="header-actions">
+      <button id="btn-add-relationship" class="btn btn-primary">+ Add Relationship</button>
+    </div>
+  </div>
+
+  <div class="admin-grid-2col">
+    <div class="card">
+      <div class="card-header">
+        <h3>Entities (<%= entities.length %>)</h3>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 480px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% entities.forEach(e => { %>
+                <tr>
+                  <td><code><%= e.id %></code></td>
+                  <td><%= e.name %></td>
+                  <td><span class="badge badge-neutral"><%= e.type %></span></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Semantic Directed Edges (<%= relationships.length %>)</h3>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 480px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th>Relationship</th>
+                <th>Target</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% relationships.forEach(r => { %>
+                <tr>
+                  <td><code><%= r.source %></code></td>
+                  <td><span class="badge badge-info"><%= r.relation %></span></td>
+                  <td><code><%= r.target %></code></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for adding relationship -->
+<div id="relationship-modal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3>Add Semantic Relationship Edge</h3>
+      <button class="modal-close-btn">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="relationship-form">
+        <div class="form-group mb-3">
+          <label class="form-label">Source Entity ID *</label>
+          <input type="text" id="rel-source" class="form-control" required placeholder="e.g. earth">
+        </div>
+        <div class="form-group mb-3">
+          <label class="form-label">Relationship Type *</label>
+          <select id="rel-relation" class="form-control" required>
+            <option value="IS_A">IS_A</option>
+            <option value="PART_OF">PART_OF</option>
+            <option value="HAS_PROPERTY">HAS_PROPERTY</option>
+            <option value="LOCATED_IN">LOCATED_IN</option>
+            <option value="CREATED_BY">CREATED_BY</option>
+            <option value="DEPENDS_ON">DEPENDS_ON</option>
+            <option value="RELATED_TO">RELATED_TO</option>
+            <option value="CAUSES">CAUSES</option>
+            <option value="BEFORE">BEFORE</option>
+            <option value="AFTER">AFTER</option>
+            <option value="INSTANCE_OF">INSTANCE_OF</option>
+          </select>
+        </div>
+        <div class="form-group mb-3">
+          <label class="form-label">Target Entity ID *</label>
+          <input type="text" id="rel-target" class="form-control" required placeholder="e.g. planet">
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">Save Relationship</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/layout-end', { script: '/js/admin.js' }) %>

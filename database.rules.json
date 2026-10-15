@@ -1,0 +1,71 @@
+{
+  "rules": {
+    "presence": {
+      "$uid": {
+        ".read": true,
+        ".write": true,
+        ".validate": "newData.hasChildren(['status', 'lastSeen'])"
+      }
+    },
+
+    "chatMessages": {
+      "$uid": {
+        ".read": true,
+        ".write": true,
+        "$conversationId": {
+          ".indexOn": ["timestamp"],
+          "$messageId": {
+            ".validate": "newData.hasChildren(['id', 'sender', 'text', 'timestamp'])",
+            "id": {
+              ".validate": "newData.isString()"
+            },
+            "sender": {
+              ".validate": "newData.isString()"
+            },
+            "text": {
+              ".validate": "newData.isString()"
+            },
+            "timestamp": {
+              ".validate": "newData.isNumber()"
+            }
+          }
+        }
+      }
+    },
+
+    "chatContext": {
+      "$uid": {
+        ".read": true,
+        ".write": true
+      }
+    },
+
+    "typing": {
+      "$uid": {
+        "$conversationId": {
+          ".read": true,
+          ".write": true
+        }
+      }
+    },
+
+    "processing": {
+      "$uid": {
+        "$requestId": {
+          ".read": true,
+          ".write": true
+        }
+      }
+    },
+
+    "learningProgress": {
+      ".read": true,
+      ".write": true
+    },
+
+    "syncState": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}

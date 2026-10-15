@@ -1,0 +1,104 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isValidKnowledgeDoc(data) {
+      return data.title is string && data.title.size() > 0 &&
+             data.answer is string && data.answer.size() > 0 &&
+             data.domain is string &&
+             data.confidence is number;
+    }
+
+    // 1. Knowledge collection (Factual verified repository)
+    match /knowledge/{knowledgeId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // 2. Knowledge versions (Audit and rollback history)
+    match /knowledgeVersions/{versionId} {
+      allow read, write: if true;
+    }
+
+    // 3. Knowledge Domains and Topics
+    match /knowledgeDomains/{domainId} {
+      allow read, write: if true;
+    }
+    match /knowledgeTopics/{topicId} {
+      allow read, write: if true;
+    }
+
+    // 4. Knowledge Graph entities & relationships
+    match /entities/{entityId} {
+      allow read, write: if true;
+    }
+    match /relationships/{relationshipId} {
+      allow read, write: if true;
+    }
+
+    // 5. Vocabulary & Synonyms
+    match /vocabulary/{wordId} {
+      allow read, write: if true;
+    }
+    match /synonyms/{synonymId} {
+      allow read, write: if true;
+    }
+
+    // 6. Intent Definitions & Reasoning Rules
+    match /intentDefinitions/{intentId} {
+      allow read, write: if true;
+    }
+    match /intentExamples/{exampleId} {
+      allow read, write: if true;
+    }
+    match /reasoningRules/{ruleId} {
+      allow read, write: if true;
+    }
+
+    // 7. Learning Candidates & Self-Training Submissions
+    match /learningCandidates/{candidateId} {
+      allow read, write: if true;
+    }
+
+    // 8. User Feedback & Evaluation Records
+    match /feedback/{feedbackId} {
+      allow read, write: if true;
+    }
+    match /evaluationRuns/{runId} {
+      allow read, write: if true;
+    }
+
+    // 9. Users & Private User Sessions / Memories
+    match /users/{uid} {
+      allow read, write: if true;
+
+      match /memories/{memoryId} {
+        allow read, write: if true;
+      }
+      match /conversations/{conversationId} {
+        allow read, write: if true;
+      }
+      match /preferences/{prefId} {
+        allow read, write: if true;
+      }
+    }
+
+    // 10. System Configuration & Audit Logs
+    match /systemConfig/{configId} {
+      allow read, write: if true;
+    }
+    match /auditLogs/{logId} {
+      allow read, write: if true;
+    }
+    match /importJobs/{jobId} {
+      allow read, write: if true;
+    }
+
+    // Fallback rule for any other collection
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

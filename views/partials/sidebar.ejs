@@ -1,0 +1,105 @@
+<aside id="app-sidebar" class="app-sidebar">
+  <div class="sidebar-header">
+    <a href="/" class="sidebar-logo">
+      <div class="logo-icon">⚡</div>
+      <div class="logo-details">
+        <span class="logo-brand">Not an AI</span>
+        <span class="logo-tagline">Deterministic Engine</span>
+      </div>
+    </a>
+    <a href="/" class="btn btn-new-chat" title="Start New Chat">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      <span>New Chat</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-heading">Conversations</div>
+    <div class="conversation-list" id="conversation-list">
+      <% if (typeof conversations !== 'undefined' && conversations && conversations.length > 0) { %>
+        <% conversations.forEach(conv => { %>
+          <a href="/?c=<%= conv.id %>" class="conv-item <%= (typeof conversationId !== 'undefined' && conversationId === conv.id) ? 'active' : '' %>">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span class="conv-title"><%= conv.title || 'Conversation' %></span>
+          </a>
+        <% }) %>
+      <% } else { %>
+        <div class="empty-conv-hint">No past conversations yet</div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-heading">Capabilities</div>
+    <ul class="sidebar-nav">
+      <li>
+        <a href="#features-modal" class="nav-link" id="btn-show-features">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+          <span>What can I ask?</span>
+        </a>
+      </li>
+      <li>
+        <a href="#memories-modal" class="nav-link" id="btn-show-memories">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          <span>Saved Memories</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <% if (isAdmin || isEditor || isReviewer) { %>
+    <div class="sidebar-section admin-section">
+      <div class="sidebar-heading">Administration</div>
+      <ul class="sidebar-nav">
+        <% if (isAdmin) { %>
+          <li>
+            <a href="/admin" class="nav-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              <span>Dashboard</span>
+            </a>
+          </li>
+        <% } %>
+        <% if (isAdmin || isEditor) { %>
+          <li>
+            <a href="/admin/knowledge" class="nav-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15z"/></svg>
+              <span>Knowledge Base</span>
+            </a>
+          </li>
+          <li>
+            <a href="/admin/graph" class="nav-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="6" cy="18" r="3"/><path d="M9 6h6M6 9v6M9 18h6"/></svg>
+              <span>Knowledge Graph</span>
+            </a>
+          </li>
+        <% } %>
+        <% if (isAdmin || isReviewer) { %>
+          <li>
+            <a href="/admin/candidates" class="nav-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              <span>Learning Queue</span>
+            </a>
+          </li>
+        <% } %>
+        <% if (isAdmin) { %>
+          <li>
+            <a href="/admin/evaluation" class="nav-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              <span>Benchmark Suite</span>
+            </a>
+          </li>
+        <% } %>
+      </ul>
+    </div>
+  <% } %>
+
+  <div class="sidebar-footer">
+    <div class="engine-badge">
+      <span class="engine-indicator"></span>
+      <div class="engine-info">
+        <span class="engine-title">Zero LLM Engine</span>
+        <span class="engine-version">BM25 + Graph + Rules</span>
+      </div>
+    </div>
+  </div>
+</aside>

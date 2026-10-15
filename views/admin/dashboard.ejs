@@ -1,0 +1,115 @@
+<%- include('../partials/layout-start') %>
+
+<div class="admin-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">System Administration</h1>
+      <p class="page-subtitle">Deterministic NLP, Inverted Indexes, and Controlled Self-Learning Overview</p>
+    </div>
+    <div class="header-actions">
+      <button id="btn-rebuild-index" class="btn btn-secondary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+        <span>Rebuild BM25 Index</span>
+      </button>
+      <button id="btn-trigger-sync" class="btn btn-primary">
+        <span>Flush Sync Queue</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">📚</div>
+      <div class="stat-content">
+        <div class="stat-value"><%= stats.totalKnowledge %></div>
+        <div class="stat-label">Verified Knowledge Records</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">🕸️</div>
+      <div class="stat-content">
+        <div class="stat-value"><%= stats.totalEntities %> / <%= stats.totalRelationships %></div>
+        <div class="stat-label">Graph Entities / Edges</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-content">
+        <div class="stat-value"><%= stats.pendingCandidates %></div>
+        <div class="stat-label">Pending Learning Candidates</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">👍</div>
+      <div class="stat-content">
+        <div class="stat-value"><%= stats.feedbackStats.satisfactionRate %>%</div>
+        <div class="stat-label">User Satisfaction Rate (<%= stats.feedbackStats.total %> votes)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-grid-2col mt-4">
+    <div class="card">
+      <div class="card-header">
+        <h3>Persistence & Connection Status</h3>
+      </div>
+      <div class="card-body">
+        <div class="info-row">
+          <span class="info-label">Cloud Firestore</span>
+          <span class="badge <%= stats.firebaseStatus.firestore ? 'badge-success' : 'badge-warning' %>">
+            <%= stats.firebaseStatus.firestore ? 'Connected' : 'Offline / Local Cache' %>
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Realtime Database</span>
+          <span class="badge <%= stats.firebaseStatus.realtimeDb ? 'badge-success' : 'badge-warning' %>">
+            <%= stats.firebaseStatus.realtimeDb ? 'Connected' : 'Local Storage Engine' %>
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Pending Sync Queue Items</span>
+          <span class="badge <%= stats.syncStatus.pendingCount === 0 ? 'badge-neutral' : 'badge-info' %>">
+            <%= stats.syncStatus.pendingCount %>
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Engine Architecture</span>
+          <span class="text-muted">Local-First (No LLMs / Deterministic)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Recent User Feedback & Corrections</h3>
+      </div>
+      <div class="card-body">
+        <% if (stats.feedbackStats.recent && stats.feedbackStats.recent.length > 0) { %>
+          <div class="feedback-feed">
+            <% stats.feedbackStats.recent.slice(0, 5).forEach(fb => { %>
+              <div class="feed-item">
+                <span class="feed-badge <%= fb.rating === 'positive' ? 'positive' : 'negative' %>">
+                  <%= fb.rating === 'positive' ? '👍' : '👎' %>
+                </span>
+                <div class="feed-details">
+                  <div class="feed-query">"<%= fb.query %>"</div>
+                  <% if (fb.correction) { %>
+                    <div class="feed-correction">Proposed Correction: <%= fb.correction %></div>
+                  <% } %>
+                  <div class="feed-time"><%= new Date(fb.createdAt).toLocaleString() %></div>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <div class="empty-state-hint">No feedback recorded yet.</div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/layout-end', { script: '/js/admin.js' }) %>

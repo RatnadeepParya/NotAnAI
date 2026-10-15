@@ -1,0 +1,138 @@
+<%- include('../partials/layout-start') %>
+
+<div class="chat-viewport">
+  <div class="chat-messages-container" id="chat-messages">
+    <% if (!messages || messages.length === 0) { %>
+      <div class="welcome-hero" id="welcome-hero">
+        <div class="welcome-badge">100% Deterministic & Local</div>
+        <h1 class="welcome-title">Welcome to Not an AI</h1>
+        <p class="welcome-subtitle">
+          An intelligent conversational engine built with pure algorithms — NO LLMs, NO external APIs, and NO hallucinated answers.
+        </p>
+
+        <div class="sample-queries-grid">
+          <div class="sample-card" data-query="What is a database?">
+            <span class="sample-icon">🗄️</span>
+            <div class="sample-title">What is a database?</div>
+            <div class="sample-desc">Relational vs NoSQL fundamentals</div>
+          </div>
+          <div class="sample-card" data-query="What is Earth?">
+            <span class="sample-icon">🌍</span>
+            <div class="sample-title">What is Earth?</div>
+            <div class="sample-desc">Planetary facts & solar system</div>
+          </div>
+          <div class="sample-card" data-query="calculate 125 * 8 + 450">
+            <span class="sample-icon">🔢</span>
+            <div class="sample-title">calculate 125 * 8 + 450</div>
+            <div class="sample-desc">Safe arithmetic AST evaluator</div>
+          </div>
+          <div class="sample-card" data-query="convert 50 km to miles">
+            <span class="sample-icon">📏</span>
+            <div class="sample-title">convert 50 km to miles</div>
+            <div class="sample-desc">Verified unit conversion tables</div>
+          </div>
+        </div>
+      </div>
+    <% } else { %>
+      <% messages.forEach(msg => { %>
+        <div class="message-bubble <%= msg.sender %>" data-message-id="<%= msg.id %>">
+          <div class="bubble-avatar">
+            <%= msg.sender === 'user' ? '👤' : '⚡' %>
+          </div>
+          <div class="bubble-content">
+            <div class="bubble-header">
+              <span class="bubble-sender"><%= msg.sender === 'user' ? 'You' : 'Not an AI' %></span>
+              <span class="bubble-time"><%= new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></span>
+              <% if (msg.sender === 'bot' && typeof msg.confidence === 'number') { %>
+                <span class="confidence-pill <%= msg.confidence >= 0.75 ? 'high' : (msg.confidence >= 0.35 ? 'medium' : 'low') %>">
+                  <%= Math.round(msg.confidence * 100) %>% confidence
+                </span>
+              <% } %>
+            </div>
+
+            <div class="bubble-text"><%= msg.text %></div>
+
+            <% if (msg.sender === 'bot') { %>
+              <div class="bubble-actions">
+                <button class="action-btn copy-btn" title="Copy text" data-text="<%= msg.text %>">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  <span>Copy</span>
+                </button>
+
+                <% if (msg.explanation) { %>
+                  <button class="action-btn explain-btn" data-explanation='<%- JSON.stringify(msg.explanation).replace(/'/g, "&#39;") %>'>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <span>Explain</span>
+                  </button>
+                <% } %>
+
+                <button class="action-btn feedback-btn" data-rating="positive" data-msg-id="<%= msg.id %>" data-record-id="<%= msg.recordId || '' %>">👍</button>
+                <button class="action-btn feedback-btn" data-rating="negative" data-msg-id="<%= msg.id %>" data-record-id="<%= msg.recordId || '' %>">👎</button>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+
+  <!-- Processing Activity Pill -->
+  <div id="processing-indicator" class="processing-pill hidden">
+    <div class="spinner"></div>
+    <span id="processing-status-text">Retrieving verified knowledge...</span>
+  </div>
+
+  <!-- Composer Area -->
+  <div class="composer-container">
+    <form id="chat-form" class="composer-form">
+      <input type="hidden" id="conversation-id" value="<%= conversationId %>">
+      <div class="composer-input-wrapper">
+        <textarea
+          id="query-input"
+          class="composer-textarea"
+          rows="1"
+          placeholder="Ask a factual question, calculation, or unit conversion... (Enter to send, Shift+Enter for new line)"
+          autofocus
+        ></textarea>
+        <button type="submit" id="send-btn" class="composer-send-btn" title="Send Message">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Explain Answer Modal -->
+<div id="explain-modal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3>Explainable Intelligence Breakdown</h3>
+      <button class="modal-close-btn">&times;</button>
+    </div>
+    <div class="modal-body" id="explain-modal-content">
+      <!-- Injected via JavaScript -->
+    </div>
+  </div>
+</div>
+
+<!-- Saved Memories Modal -->
+<div id="memories-modal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3>Your Saved Memories</h3>
+      <button class="modal-close-btn">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-desc">Memories are strictly private to you and never shared across other users or global datasets.</p>
+      <div id="user-memories-list" class="memories-list"></div>
+      <div class="modal-actions mt-3">
+        <button id="btn-export-memories" class="btn btn-secondary">Export JSON</button>
+        <button id="btn-clear-memories" class="btn btn-danger">Clear All Memories</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/layout-end') %>
